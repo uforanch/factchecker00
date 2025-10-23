@@ -1,0 +1,59 @@
+"""
+so far don't have a way to get article and citations
+will do it later
+
+
+"""
+
+from itertools import batched
+import multiprocessing
+
+
+
+
+def get_top_articles(n=3):
+    """
+    Probably this is going to be passed off to another part of program
+    :return:
+    """
+    pass
+
+def get_citations_and_summary(article):
+    """
+    pass to somewhere else as above
+
+    :param article:
+    :return:
+    """
+
+def citation_point_response(data=None):
+    """
+    use util functions to
+    :param data:
+    :return:
+    """
+
+def get_headline_source(article):
+    return ""
+"""
+reading about workerpool... don't think below will work
+iterate into new one
+"""
+def analyze_articles(articles):
+    output_map = {}
+    pods = 5 ## get from config
+    pool = multiprocessing.Pool()# configure
+    for article in articles:
+        result_list = []
+        #below blocks until ready
+        citation_data_list = get_citations_and_summary(article)
+        #create a pod assignment to a worker
+        available_worker = 0
+        for citation_data_batch in batched(citation_data_list, n=pods):
+            result_batch = pool.apply(citation_point_response, citation_data_batch)
+            result_list.extend(result_batch)
+        #do something to assemble output into something reasonable for output
+
+        output_map[get_headline_source(article)] = None
+
+
