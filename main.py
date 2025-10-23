@@ -4,14 +4,15 @@ will do it later
 
 
 """
-
+import json
 from itertools import batched
 import multiprocessing
 
-from utils.scraping import get_news, get_citations
+from utils.scraping import get_news, get_citations, get_text
 
+from utils.get_config import config_dir
 
-
+print(config_dir)
 
 def get_top_articles(n=3, days=1):
     return get_news(n, days)
@@ -59,6 +60,19 @@ def analyze_articles(articles):
 
 
 #print(get_top_articles(1,3))
-#url = "https://www.cnn.com/2021/10/12/health/plastic-chemical-early-death-wellness/index.html"
+url = "https://www.cnn.com/2021/10/12/health/plastic-chemical-early-death-wellness/index.html"
 def exec():
     articles = get_top_articles(10,1)
+
+def get_test_data(url):
+    cit_dict = get_citations(url)
+    cit_list = []
+    for sent, url_list in cit_dict.items():
+        for url in url_list:
+            if "#" in url or "mailto:" in url:
+                continue
+            cit_list.append({"topic":sent, "text":get_text(url)})
+    with open("cit_json_00.json", "w") as f:
+        json.dump({"citations": cit_list},f)
+
+

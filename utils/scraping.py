@@ -42,6 +42,7 @@ def get_text(url):
         print(f"Error fetching URL: {e}")
     except Exception as e:
         print(f"An error occurred: {e}")
+
 def get_citations(url):
     try:
         response = requests.get(url)
@@ -59,11 +60,11 @@ def get_citations(url):
             link_url = a_tag.get('href')
             link_text = a_tag.get_text(strip=True)
             if link_url:
-                print(f"Text: {link_text}, URL: {link_url}")
                 for sent in sent_list:
                     if link_text in sent:
                         sent_dict[sent].append(link_url)
-        print(json.dumps(sent_dict, indent=4))
+        return dict(sent_dict)
+
 
 
     except requests.exceptions.RequestException as e:
