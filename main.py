@@ -8,15 +8,13 @@ will do it later
 from itertools import batched
 import multiprocessing
 
+from utils.scraping import get_news, get_citations
 
 
 
-def get_top_articles(n=3):
-    """
-    Probably this is going to be passed off to another part of program
-    :return:
-    """
-    pass
+
+def get_top_articles(n=3, days=1):
+    return get_news(n, days)
 
 def get_citations_and_summary(article):
     """
@@ -32,6 +30,9 @@ def citation_point_response(data=None):
     :param data:
     :return:
     """
+
+def get_article_relevancy(article):
+    pass
 
 def get_headline_source(article):
     return ""
@@ -57,3 +58,7 @@ def analyze_articles(articles):
         output_map[get_headline_source(article)] = None
 
 
+#print(get_top_articles(1,3))
+#url = "https://www.cnn.com/2021/10/12/health/plastic-chemical-early-death-wellness/index.html"
+def exec():
+    articles = get_top_articles(10,1)

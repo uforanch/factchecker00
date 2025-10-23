@@ -1,3 +1,7 @@
 kubernetes
 requests
 PyYaml
+dotenv
+newsapi-python
+beautifulsoup4
+nltk

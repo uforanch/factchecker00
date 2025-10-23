@@ -20,6 +20,12 @@ with open("ollama-deployment.yaml", "r") as deployment_file:
 with open("ollama-service.yaml", "r") as service_file:
     service_data = yaml.safe_load(service_file)
 
+with open("kubes-setup.sh", "r") as kubes_bash_file:
+    for line in kubes_bash_file.readlines():
+        if "port-forward" in line.lower():
+            port=int(list(filter(lambda x: ":" in x, line.split(" ")))[0].split(":")[0])
+    print(port)
+
 PORT = 11434
 REPLICAS = deployment_data["spec"]["replicas"]
 
@@ -35,4 +41,11 @@ def query_ollama(prompt):
             output += resp
     return output
 
-print(query_ollama("tell me a joke."))
+def query_ollama_02(prompt):
+    payload = {"model": "llama3", "prompt": prompt, "stream":False}
+    response = requests.post("http://localhost:11434/api/generate", json=payload, stream=False)
+    output = yaml.safe_load(response.text)["response"]
+
+    return output #Here we see that
+
+#print(query_ollama_02("tell me a joke."))
