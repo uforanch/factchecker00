@@ -1,6 +1,7 @@
 from kubernetes import client, config
 from utils.get_config import PORT
 import requests
+import yaml
 
 config.load_kube_config()
 v1 = client.CoreV1Api()
@@ -13,6 +14,16 @@ def get_status_of_pod(ip):
     status = requests.get(f"http://{ip}:{PORT}/status").json()
     print(status)
     return status["state"]
+
+def send_payload_to_pod(payload, pod):
+    response = requests.post("http://localhost:11434/api/generate", json=payload, stream=True)
+    output = ""
+    for line in response.iter_lines():
+        if line:
+            data = line.decode("utf-8")
+            resp = yaml.safe_load(data)["response"]
+            output += resp
+    return output
 
 pods = get_pods()
 

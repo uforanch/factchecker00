@@ -13,6 +13,7 @@ import os.path
 import yaml
 
 PORT = 8080
+MODEL = "gemma3"
 
 if os.path.basename(os.path.normpath(os.getcwd())) == "utils":
     config_dir = os.path.dirname(os.getcwd()) + "//"
@@ -21,6 +22,15 @@ else:
 
 with open(config_dir + "ollama-deployment.yaml", "r") as deployment_file:
     deployment_data = yaml.safe_load(deployment_file)
+
+with open(config_dir + "ollama-deployment.yaml", "r") as deployment_file:
+    for l in deployment_file.readlines():
+        line = l.strip()
+        if "ollama pull" in line:
+            MODEL = line[line.find("ollama pull") + len("ollama pull")+1:].strip().split(" ")[0]
+    print(MODEL)
+
+
 
 with open(config_dir + "ollama-service.yaml", "r") as service_file:
     service_data = yaml.safe_load(service_file)

@@ -5,4 +5,4 @@ kubectl apply -f ollama-service.yaml
 kubectl get pods
 kubectl get svc
 sleep 5
-kubectl port-forward service/ollama-service 11434:11434
+kubectl port-forward service/ollama-service 11435:11434

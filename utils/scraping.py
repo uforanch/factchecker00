@@ -37,11 +37,13 @@ def get_text(url):
         article_body = ""
         for paragraph in soup.find_all('p'):
             article_body += paragraph.get_text() + "\n"
+        return article_body
 
     except requests.exceptions.RequestException as e:
         print(f"Error fetching URL: {e}")
     except Exception as e:
         print(f"An error occurred: {e}")
+    return  None
 
 def get_citations(url):
     try:
