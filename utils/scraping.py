@@ -45,7 +45,12 @@ def get_text(url):
         print(f"An error occurred: {e}")
     return  None
 
-def get_citations(url):
+def get_citations(article):
+    url = article["url"]
+    article["text"] = get_text(url)
+    if article["text"] is None:
+        article["citations"] = None
+        return article
     try:
         response = requests.get(url)
         response.raise_for_status()  # Raise an exception for bad status codes
@@ -58,6 +63,9 @@ def get_citations(url):
         sent_list = [sentence for sentence in sent_tokenize(article_body, "en")]
         sent_dict = defaultdict(list)
 
+        sent_list.insert(0, article["title"])
+        sent_dict[article["title"]].append(article["text"])
+
         for a_tag in soup.find_all('a', href=True):
             link_url = a_tag.get('href')
             link_text = a_tag.get_text(strip=True)
@@ -65,7 +73,8 @@ def get_citations(url):
                 for sent in sent_list:
                     if link_text in sent:
                         sent_dict[sent].append(link_url)
-        return dict(sent_dict)
+        article["citations"] = dict(sent_dict)
+        return article
 
 
 
