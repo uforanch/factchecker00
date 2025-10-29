@@ -72,7 +72,8 @@ def get_citations(article):
             if link_url:
                 for sent in sent_list:
                     if link_text in sent:
-                        sent_dict[sent].append(link_url)
+                        if len(link_text) > 20 and not link_text.startswith("https://"):
+                            sent_dict[sent].append(link_url)
         article["citations"] = dict(sent_dict)
         return article
 

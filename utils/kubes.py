@@ -10,13 +10,13 @@ def get_pods():
     pods = v1.list_namespaced_pod(namespace="default", label_selector="app=llm")
     return [p.status.pod_ip for p in pods.items]
 
-def get_status_of_pod(ip):
-    status = requests.get(f"http://{ip}:{PORT}/status").json()
+def get_status_of_pod(pod):
+    status = requests.get(f"http://{pod}:{PORT}/status").json()
     print(status)
     return status["state"]
 
 def send_payload_to_pod(payload, pod):
-    response = requests.post("http://localhost:11434/api/generate", json=payload, stream=True)
+    response = requests.post(f"http://{pod}:{PORT}/api/generate", json=payload, stream=True)
     output = ""
     for line in response.iter_lines():
         if line:

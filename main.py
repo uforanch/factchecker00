@@ -70,9 +70,9 @@ def get_relevant_articles(articles, n):
     return science_articles[:n]
 
 
-def analyze_article_citations(pod, topic, text):
-    print(pod, topic, text)
-    return (topic, text)
+def analyze_article_citations(pod, id_, topic, text):
+    print(id_, topic, text)
+    return (id_, topic + ": " + text)
 
 
 def analyze_articles(articles):
@@ -86,12 +86,14 @@ def analyze_articles(articles):
             for text in text_list:
                 citation_chain.append((i, topic, text))
     for citation_batch in batched(citation_chain, len(PODS)):
-        results = list(map(lambda x: (x[1], analyze_article_citations(x[0][0],x[0][1],x[0][2])), zip(citation_batch, PODS)))
-        for i, r in results:
-            if "analysis" in articles[i].keys():
-                articles[i]["analysis"].append(r)
+        results = pool.map(lambda x: analyze_article_citations(x[1], x[0][0],x[0][1],x[0][2]), zip(citation_batch, PODS))
+        for r in results:
+            id_, out = r
+            if "analysis" in articles[id_].keys():
+                articles[id_]["analysis"].append(out)
             else:
-                articles[i]["analysis"] = [r]
+                articles[id_]["analysis"] = [out]
+    pool.close()
     return articles
 
 
@@ -103,22 +105,8 @@ def exec():
     articles = get_relevant_articles(articles, 3)
     articles = get_articles_details(articles)
     articles = analyze_articles(articles)
-    #print(json.dumps(articles, indent=4))
+    print(json.dumps(articles, indent=4))
 
-
-def get_test_data(url):
-    cit_dict = get_citations(url)
-    cit_list = []
-    for sent, url_list in cit_dict.items():
-        for url in url_list:
-            if "#" in url or "mailto:" in url:
-                continue
-            t = get_text(url)
-            if t is not None:
-                print("*")
-                cit_list.append({"topic":sent, "text":get_text(url)})
-    with open("cit_json_00.json", "w") as f:
-        json.dump({"citations": cit_list},f)
 exec()
 
 #get_test_data(url)
