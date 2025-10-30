@@ -2,6 +2,8 @@ from kubernetes import client, config
 from utils.get_config import PORT
 import requests
 import yaml
+from multiprocessing.pool import ThreadPool
+from itertools import batched
 
 config.load_kube_config()
 v1 = client.CoreV1Api()
@@ -25,6 +27,27 @@ def send_payload_to_pod(payload, pod):
             output += resp
     return output
 
-pods = get_pods()
 
-print(get_status_of_pod(pods[0]))
+
+def kubes_parallel_analysis(id_prompts, filter_func = None, limit=-1):
+    pods = get_pods()
+    pool = ThreadPool(len(pods))
+    # think this is it
+    results = []
+    for citation_batch in batched(id_prompts, len(pods)):
+        r = pool.map(lambda x: (x[0][0], send_payload_to_pod(x[0][1], x[1])), zip(citation_batch, pods))
+        results.extend(r)
+        if limit>0:
+            if filter_func is not None:
+                n = len(list(filter(lambda x : filter_func(x[1]), results)))
+            else:
+                n = len(results)
+            if n>=limit:
+                results = results[:limit]
+            break
+
+
+    pool.close()
+    return results
+
+

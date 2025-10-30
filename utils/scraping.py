@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import nltk
 from nltk.tokenize import sent_tokenize
 
+from multiprocessing.pool import ThreadPool
 from collections import defaultdict
 from dotenv import load_dotenv
 import json
@@ -83,3 +84,10 @@ def get_citations(article):
         print(f"Error fetching URL: {e}")
     except Exception as e:
         print(f"An error occurred: {e}")
+
+def parallel_get_articles_details(articles):
+    pool = ThreadPool(len(articles))
+    articles_with_details = pool.map(lambda x: get_citations(x), articles)
+
+    pool.close()
+    return articles_with_details

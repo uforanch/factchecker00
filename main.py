@@ -5,52 +5,16 @@ will do it later
 
 """
 import json
-from itertools import batched
-#from multiprocessing import Pool
-from multiprocessing.pool import ThreadPool
-from utils.scraping import get_news, get_citations, get_text
-#from utils.kubes import get_pods
-from utils.get_config import config_dir
-
-print(config_dir)
+from utils.scraping import get_news, parallel_get_articles_details
+from utils.kubes import kubes_parallel_analysis
+from utils.prompting import is_this_scientific, does_this_support_our_text
 
 
-
-PODS =  ["A", "B", "C", "D"]
 
 def get_top_articles(n=3, days=1):
     return get_news(n, days)
 
 
-"""
-s
-"""
-def get_article_citations_and_summary(article):
-    # scrape for text and citatations
-    # return as dictionary
-    return get_citations(article)
-
-"""
-scrape articles in parallel
-"""
-def get_articles_details(articles):
-    pool = ThreadPool(len(articles))
-    articles_with_details = pool.map(lambda x: get_article_citations_and_summary(x), articles)
-
-    pool.close()
-    return articles_with_details
-
-def is_article_scientific(pod, article):
-    return True
-
-def get_article_relevancy(pod, article):
-    # get prompt
-    # pass to pod
-    # return true, false
-    article_scientific = is_article_scientific(pod, article)
-    if article_scientific:
-        article["text"]=get_text(article["url"])
-    return  article if article_scientific else None
 
 """
 Wish to go through, in a multiprocessed manner, the top articles and get the top X 
@@ -59,42 +23,36 @@ that are actually scientific
 probably go in batches, add correct articles to the batch count, and when count>=X return
 """
 def get_relevant_articles(articles, n):
-    pool = ThreadPool(len(PODS))
+    id_prompts = list(map(lambda x : (x[0], is_this_scientific(x[1]["title"], x[1]["description"])), enumerate(articles)))
     science_articles = []
-    for article_batch in batched(articles, len(PODS)):
-        results = pool.map(lambda x: get_article_relevancy(x[1], x[0]), zip(article_batch, PODS))
-        science_articles.extend([r for r in results if r is not None])
-        if len(science_articles) >= n:
-            break
-    pool.close()
-    return science_articles[:n]
+    results = kubes_parallel_analysis(id_prompts, n, lambda x : x.startswith("Yes"))
+    for i, r in results:
+        if not r.startswith("Yes"):
+            continue
+        science_articles.append(articles[i])
+
+    science_articles =  parallel_get_articles_details(science_articles)
+    return science_articles
 
 
-def analyze_article_citations(pod, id_, topic, text):
-    print(id_, topic, text)
-    return (id_, topic + ": " + text)
 
 
 def analyze_articles(articles):
-    pool = ThreadPool(len(PODS))
-    # think this is it
     citation_chain = []
     for i, article in enumerate(articles):
         citation_chain.append((i, article["title"], article["text"]))
-        #citation_chain.extend([(i, c["topic"], c["text"]) for topic, text in article["citations"].items()])
         for topic, text_list in article["citations"].items():
             for text in text_list:
-                citation_chain.append((i, topic, text))
-    for citation_batch in batched(citation_chain, len(PODS)):
-        results = pool.map(lambda x: analyze_article_citations(x[1], x[0][0],x[0][1],x[0][2]), zip(citation_batch, PODS))
-        for r in results:
-            id_, out = r
-            if "analysis" in articles[id_].keys():
-                articles[id_]["analysis"].append(out)
-            else:
-                articles[id_]["analysis"] = [out]
-    pool.close()
-    return articles
+                citation_chain.append((i, does_this_support_our_text(topic, text)))
+
+    results = kubes_parallel_analysis(citation_chain)
+    for r in results:
+        id_, out = r
+        if "analysis" in articles[id_].keys():
+            articles[id_]["analysis"].append(out)
+        else:
+            articles[id_]["analysis"] = [out]
+
 
 
 
@@ -103,7 +61,6 @@ url = "https://www.cnn.com/2021/10/12/health/plastic-chemical-early-death-wellne
 def exec():
     articles = get_top_articles(10,1)
     articles = get_relevant_articles(articles, 3)
-    articles = get_articles_details(articles)
     articles = analyze_articles(articles)
     print(json.dumps(articles, indent=4))
 
