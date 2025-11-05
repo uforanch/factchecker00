@@ -11,7 +11,7 @@ from utils.prompting import is_this_scientific, does_this_support_our_text
 
 
 
-def get_top_articles(n=3, days=1):
+def get_top_articles(n=3, days=1, get_news=get_news):
     return get_news(n, days)
 
 
@@ -22,7 +22,7 @@ that are actually scientific
 
 probably go in batches, add correct articles to the batch count, and when count>=X return
 """
-def get_relevant_articles(articles, n):
+def get_relevant_articles(articles, n, is_this_scientific=is_this_scientific, kubes_parallel_analysis = kubes_parallel_analysis, parallel_get_articles_details=parallel_get_articles_details):
     id_prompts = list(map(lambda x : (x[0], is_this_scientific(x[1]["title"], x[1]["description"])), enumerate(articles)))
     science_articles = []
     results = kubes_parallel_analysis(id_prompts, n, lambda x : x.startswith("Yes"))
@@ -37,7 +37,7 @@ def get_relevant_articles(articles, n):
 
 
 
-def analyze_articles(articles):
+def analyze_articles(articles, does_this_support_our_text = does_this_support_our_text, kubes_parallel_analysis=kubes_parallel_analysis):
     citation_chain = []
     for i, article in enumerate(articles):
         citation_chain.append((i, article["title"], article["text"]))
@@ -52,6 +52,7 @@ def analyze_articles(articles):
             articles[id_]["analysis"].append(out)
         else:
             articles[id_]["analysis"] = [out]
+    return articles
 
 
 
