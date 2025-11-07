@@ -10,7 +10,6 @@ from utils.kubes import kubes_parallel_analysis
 from utils.prompting import is_this_scientific, does_this_support_our_text
 
 
-
 def get_top_articles(n=3, days=1, get_news=get_news):
     return get_news(n, days)
 
