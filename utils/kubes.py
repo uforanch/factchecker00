@@ -9,7 +9,7 @@ config.load_kube_config()
 v1 = client.CoreV1Api()
 
 def get_pods():
-    pods = v1.list_namespaced_pod(namespace="default", label_selector="app=llm")
+    pods = v1.list_namespaced_pod(namespace="default", label_selector="app=ollama")
     return [p.status.pod_ip for p in pods.items]
 
 def get_status_of_pod(pod):
@@ -50,4 +50,7 @@ def kubes_parallel_analysis(id_prompts, filter_func = None, limit=-1):
     pool.close()
     return results
 
-
+print(get_pods())
+from utils.get_config import MODEL
+print(get_status_of_pod(get_pods()[0]))
+#print(send_payload_to_pod({"model": MODEL, "prompt": "Tell me a joke."}, get_pods()[0]))
