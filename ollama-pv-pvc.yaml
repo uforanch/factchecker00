@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: ollama-pv
+  name: ollama-pv-2
 spec:
   capacity:
     storage: 10Gi
@@ -13,7 +13,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: ollama-pvc
+  name: ollama-pvc-2
 spec:
   accessModes:
     - ReadWriteMany
