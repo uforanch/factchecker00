@@ -1,4 +1,14 @@
-from utils.get_config import MODEL# get this from config later
+import os.path
+import json
+
+if os.path.basename(os.path.normpath(os.getcwd())) == "utils":
+    config_dir = os.path.dirname(os.getcwd()) + "//"
+else:
+    config_dir = os.getcwd() + "//"
+
+with open(config_dir + "config.json") as f:
+    CONFIG = json.load(f)
+    MODEL = CONFIG["MODEL"]
 
 def is_this_scientific(article_topic, article_desc):
     prompt = f"Does \"{article_topic + ": "+article_desc}\" describe a science news article's headline and description?"
