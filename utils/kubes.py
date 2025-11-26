@@ -1,8 +1,12 @@
+from itertools import batched
+from multiprocessing.pool import ThreadPool
+
 from kubernetes import config
 from kubernetes.client import CoreV1Api, Configuration
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 import yaml
+import json
 import time
 import os.path
 
@@ -15,11 +19,16 @@ else:
 # Load manifests
 # --------------------------------------------------------
 with open(config_dir + "ollama-pod.yaml", "r") as f:
-    pod_manifest = yaml.safe_load(f)
+    pod_MANIFEST = yaml.safe_load(f)
 
 with open(config_dir + "ollama-pv-pvc.yaml", "r") as f:
-    storage_manifests = list(yaml.safe_load_all(f))
+    STORAGE_MANIFESTs = list(yaml.safe_load_all(f))
 
+with open(config_dir + "config.json") as f:
+    CONFIG = json.load(f)
+    NUM_PODS = int(CONFIG["NUM_PODS"])
+
+POD_NAME_I = lambda i : f"llama-{i}"
 
 # --------------------------------------------------------
 # Helpers
@@ -60,7 +69,7 @@ def wait_for_pod_ready(api: CoreV1Api, name: str, namespace: str):
 def launch_storage(api: CoreV1Api):
     print("Launching storage resources…")
     try:
-        for manifest in storage_manifests:
+        for manifest in STORAGE_MANIFESTs:
             kind = manifest.get("kind")
 
             if kind == "PersistentVolume":
@@ -91,7 +100,7 @@ def launch_storage(api: CoreV1Api):
 # --------------------------------------------------------
 def launch_pod(api: CoreV1Api, name: str):
     print(f"Creating pod: {name}")
-    manifest = pod_manifest.copy()
+    manifest = pod_MANIFEST.copy()
     manifest["metadata"]["name"] = name
 
     api.create_namespaced_pod(namespace="default", body=manifest)
@@ -151,7 +160,7 @@ def exec_stream(api, pod, command):
 # --------------------------------------------------------
 # Main
 # --------------------------------------------------------
-def integration_test():
+def setup():
     # Load kubeconfig
     config.load_kube_config()
 
@@ -164,9 +173,12 @@ def integration_test():
     launch_storage(api)
 
     # Launch multiple pods
-    for i in range(3):
-        name = f"llama-{i}"
+    for i in range(NUM_PODS):
+        name = POD_NAME_I(i)
         launch_pod_if_not_exists(api, name)
+    return api
+
+def integration_test(api):
 
     # Exec test
     print("\n=== Exec Test ===")
@@ -184,5 +196,34 @@ def integration_test():
     print("\n=== Done ===")
 
 
+
+def send_payload_to_pod(api, pod_name, payload):
+    output = exec_stream(api, pod_name, f"ollama run {payload["model"]} {payload["prompt"]}")
+    return output
+
+
+
+def kubes_parallel_analysis(id_prompts, filter_func = None, limit=-1):
+    pods = [POD_NAME_I(i) for i in range(NUM_PODS)]
+    pool = ThreadPool(len(pods))
+    # think this is it
+    results = []
+    for citation_batch in batched(id_prompts, len(pods)):
+        r = pool.map(lambda x: (x[0][0], send_payload_to_pod(x[0][1], x[1])), zip(citation_batch, pods))
+        results.extend(r)
+        if limit>0:
+            if filter_func is not None:
+                n = len(list(filter(lambda x : filter_func(x[1]), results)))
+            else:
+                n = len(results)
+            if n>=limit:
+                results = results[:limit]
+            break
+
+
+    pool.close()
+    return results
+
 if __name__ == "__main__":
-    integration_test()
+    api = setup()
+    integration_test(api)
