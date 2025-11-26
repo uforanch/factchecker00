@@ -1,5 +1,8 @@
 MAIN
- * Get the pods working again
+ * Secondary branch 
+   * Change to new kubes code (include manifests)
+   * Update the prompting
+   * Merge back into refactor, test refactor
 
 AFTER THAT
 * merge this in
