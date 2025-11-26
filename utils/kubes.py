@@ -203,26 +203,42 @@ def send_payload_to_pod(api, pod_name, payload):
 
 
 
-def kubes_parallel_analysis(id_prompts, filter_func = None, limit=-1):
+def kubes_parallel_analysis(api, id_prompts, filter_func = None, send_payload_to_pod=send_payload_to_pod, count_func=None, count_max=None):
+    """
+    What I'm hoping this does:
+        take a list of "prompts" with additional information
+        return a list where the prompts have been extended with result
+
+        let's change this to a list of dicts
+
+    :param api:
+    :param id_prompts:
+    :param filter_func:
+    :param limit:
+    :return:
+    """
     pods = [POD_NAME_I(i) for i in range(NUM_PODS)]
     pool = ThreadPool(len(pods))
     # think this is it
     results = []
-    for citation_batch in batched(id_prompts, len(pods)):
-        r = pool.map(lambda x: (x[0][0], send_payload_to_pod(x[0][1], x[1])), zip(citation_batch, pods))
-        results.extend(r)
-        if limit>0:
-            if filter_func is not None:
-                n = len(list(filter(lambda x : filter_func(x[1]), results)))
+    for prompt_id_batch in batched(range(len(id_prompts)), len(pods)):
+        prompt_batch = [id_prompts[i] for i in prompt_id_batch]
+        results_batch = pool.map(lambda x: send_payload_to_pod(api, x[0], x[1]["payload"]), zip(pods, prompt_batch))
+        results.extend(results_batch)
+        for i, r in zip(prompt_id_batch, results_batch):
+            id_prompts[i]["result"] = r
+        if count_max>0:
+            if count_func is not None:
+                n = len(list(filter(lambda x : count_func(x[1]), results)))
             else:
                 n = len(results)
-            if n>=limit:
-                results = results[:limit]
-            break
+            if n>=count_max:
+                results = results[:count_max]
+                break
 
 
     pool.close()
-    return results
+    return
 
 if __name__ == "__main__":
     api = setup()
