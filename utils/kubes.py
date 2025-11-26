@@ -1,5 +1,5 @@
 from kubernetes import client, config
-from utils.get_config import PORT
+#from utils.get_config import PORT
 import requests
 import yaml
 from multiprocessing.pool import ThreadPool
@@ -7,6 +7,8 @@ from itertools import batched
 
 config.load_kube_config()
 v1 = client.CoreV1Api()
+
+PORT = 11434
 
 def get_pods():
     pods = v1.list_namespaced_pod(namespace="default", label_selector="app=ollama")
