@@ -203,7 +203,7 @@ def send_payload_to_pod(api, pod_name, payload):
 
 
 
-def kubes_parallel_analysis(api, id_prompts, filter_func = None, send_payload_to_pod=send_payload_to_pod, count_func=None, count_max=None):
+def kubes_parallel_analysis(api, id_prompts, filter_func = None, send_payload_to_pod=send_payload_to_pod, count_func=None, count_max=-1):
     """
     What I'm hoping this does:
         take a list of "prompts" with additional information

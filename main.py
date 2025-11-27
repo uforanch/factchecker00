@@ -12,11 +12,11 @@ from utils.prompting import is_this_scientific, does_this_support_our_text
 
 API = setup()
 
-
+#debug function, move out when you have real scripts
 def test_send_payload_to_pod(api, pod_name, payload):
     output = (api, pod_name, f"ollama run {payload["model"]} {payload["prompt"]}")
     print(output)
-    return str(output)
+    return "Yes " + str(output)
 
 def get_top_articles(n=3, days=1, get_news=get_news):
     return get_news(n, days)
@@ -45,12 +45,12 @@ def get_relevant_articles(articles, n, is_this_scientific=is_this_scientific, ku
 def analyze_articles(articles, does_this_support_our_text = does_this_support_our_text, kubes_parallel_analysis=kubes_parallel_analysis):
     citation_chain = []
     for i, article in enumerate(articles):
-        citation_chain.append((i, does_this_support_our_text(article["title"], article["text"])))
+        citation_chain.append({"article_id":i, "payload": does_this_support_our_text(article["title"], article["text"])})
         for topic, text_list in article["citations"].items():
             for text in text_list:
                 citation_chain.append({"article_id":i, "payload":does_this_support_our_text(topic, text)})
 
-    kubes_parallel_analysis(citation_chain, send_payload_to_pod=test_send_payload_to_pod)
+    kubes_parallel_analysis(API, citation_chain, send_payload_to_pod=test_send_payload_to_pod)
     for d in citation_chain:
         id_  = d["article_id"]
         out = d["result"]
