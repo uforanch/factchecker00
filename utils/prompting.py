@@ -11,9 +11,9 @@ with open(config_dir + "config.json") as f:
     MODEL = CONFIG["MODEL"]
 
 def is_this_scientific(article_topic, article_desc):
-    prompt = f"Does \"{article_topic + ": "+article_desc}\" describe a science news article's headline and description?"
+    prompt = f"Please begin your output with yes or no answer before giving your support. Does \"{article_topic + ": "+article_desc}\" describe a science news article's headline and description?"
     return {"model": MODEL, "prompt": prompt}
 
 def does_this_support_our_text(sentence, citation_text):
-    prompt = f"Does the following article support the conclusion that \"{sentence}\": {citation_text}"
+    prompt = f"Please begin your output with yes or no answer before giving your support. Does the following article support the conclusion that \"{sentence}\": {citation_text}"
     return {"model": MODEL, "prompt": prompt}

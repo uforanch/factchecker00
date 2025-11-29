@@ -12,7 +12,7 @@ from utils.prompting import is_this_scientific, does_this_support_our_text
 
 API = setup()
 
-#debug function, move out when you have real scripts
+#debug function, move out when you write tests
 def test_send_payload_to_pod(api, pod_name, payload):
     output = (api, pod_name, f"ollama run {payload["model"]} {payload["prompt"]}")
     print(output)
@@ -30,13 +30,13 @@ probably go in batches, add correct articles to the batch count, and when count>
 def get_relevant_articles(articles, n, is_this_scientific=is_this_scientific, kubes_parallel_analysis = kubes_parallel_analysis, parallel_get_articles_details=parallel_get_articles_details):
     id_prompts = list(map(lambda x : {"article_id":x[0], "payload":is_this_scientific(x[1]["title"], x[1]["description"])}, enumerate(articles)))
     science_articles = []
-    kubes_parallel_analysis(API, id_prompts, count_func=lambda r: r.startswith("Yes"), count_max = n, send_payload_to_pod=test_send_payload_to_pod)
+    kubes_parallel_analysis(API, id_prompts, count_func=lambda r: r.startswith("Yes"), count_max = n)
     for d in id_prompts:
         if not d["result"].startswith("Yes"):
             continue
         science_articles.append(articles[d["article_id"]])
-
-    science_articles =  parallel_get_articles_details(science_articles)
+    if science_articles:
+        science_articles =  parallel_get_articles_details(science_articles)
     return science_articles
 
 
@@ -50,7 +50,7 @@ def analyze_articles(articles, does_this_support_our_text = does_this_support_ou
             for text in text_list:
                 citation_chain.append({"article_id":i, "payload":does_this_support_our_text(topic, text)})
 
-    kubes_parallel_analysis(API, citation_chain, send_payload_to_pod=test_send_payload_to_pod)
+    kubes_parallel_analysis(API, citation_chain)
     for d in citation_chain:
         id_  = d["article_id"]
         out = d["result"]

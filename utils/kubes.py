@@ -15,9 +15,6 @@ if os.path.basename(os.path.normpath(os.getcwd())) == "utils":
 else:
     config_dir = os.getcwd() + "//"
 
-# --------------------------------------------------------
-# Load manifests
-# --------------------------------------------------------
 with open(config_dir + "ollama-pod.yaml", "r") as f:
     pod_MANIFEST = yaml.safe_load(f)
 
@@ -30,9 +27,6 @@ with open(config_dir + "config.json") as f:
 
 POD_NAME_I = lambda i : f"llama-{i}"
 
-# --------------------------------------------------------
-# Helpers
-# --------------------------------------------------------
 def wait_for_pv(api: CoreV1Api, name: str):
     print(f"Waiting for PV '{name}' to be Available/Bound...")
     while True:
@@ -43,7 +37,7 @@ def wait_for_pv(api: CoreV1Api, name: str):
         time.sleep(1)
 
 
-def wait_for_pvc(api: CoreV1Api, name: str, namespace: str):
+def wait_for_pvc(api: CoreV1Api, name: str, namespace: str = "default"):
     print(f"Waiting for PVC '{name}' to be Bound...")
     while True:
         pvc = api.read_namespaced_persistent_volume_claim(name, namespace)
@@ -53,7 +47,7 @@ def wait_for_pvc(api: CoreV1Api, name: str, namespace: str):
         time.sleep(1)
 
 
-def wait_for_pod_ready(api: CoreV1Api, name: str, namespace: str):
+def wait_for_pod_ready(api: CoreV1Api, name: str, namespace: str="default"):
     print(f"Waiting for pod '{name}' to be Running...")
     while True:
         pod = api.read_namespaced_pod(name=name, namespace=namespace)
@@ -62,10 +56,6 @@ def wait_for_pod_ready(api: CoreV1Api, name: str, namespace: str):
             break
         time.sleep(1)
 
-
-# --------------------------------------------------------
-# Storage creation
-# --------------------------------------------------------
 def launch_storage(api: CoreV1Api):
     print("Launching storage resources…")
     try:
@@ -94,10 +84,6 @@ def launch_storage(api: CoreV1Api):
             return
         print(E)
 
-
-# --------------------------------------------------------
-# Pod creation
-# --------------------------------------------------------
 def launch_pod(api: CoreV1Api, name: str):
     print(f"Creating pod: {name}")
     manifest = pod_MANIFEST.copy()
@@ -111,6 +97,7 @@ def launch_pod_if_not_exists(api: CoreV1Api, name: str):
     try:
         api.read_namespaced_pod(name, "default")
         print(f"Pod '{name}' already exists.")
+        wait_for_pod_ready(api, name)
     except ApiException as e:
         if e.status == 404:
             launch_pod(api, name)
@@ -118,10 +105,6 @@ def launch_pod_if_not_exists(api: CoreV1Api, name: str):
             print(f"Unexpected error: {e}")
             raise
 
-
-# --------------------------------------------------------
-# Exec support (multiple output lines)
-# --------------------------------------------------------
 def exec_stream(api, pod, command):
     """
     Returns ALL output lines from stdout and stderr.
@@ -157,9 +140,6 @@ def exec_stream(api, pod, command):
     return "".join(output_lines)
 
 
-# --------------------------------------------------------
-# Main
-# --------------------------------------------------------
 def setup():
     # Load kubeconfig
     config.load_kube_config()
@@ -198,7 +178,7 @@ def integration_test(api):
 
 
 def send_payload_to_pod(api, pod_name, payload):
-    output = exec_stream(api, pod_name, f"ollama run {payload["model"]} {payload["prompt"]}")
+    output = exec_stream(api, pod_name, f"ollama run {payload["model"]} \"{payload["prompt"]}\"")
     return output
 
 

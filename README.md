@@ -1,13 +1,10 @@
+# STATEMENT OF PURPOSE
+This was largely a learning experience to learn how to use kubes with Python, work with LLMs, work with multithreading. 
+
+
 # SETUP
 install minikubes, kubectl
 
 pip install requirements.txt
 
-Get api keys and put them in .env
-
-ISSUE: nltk dl's - haven't figured out what to do with that
-
-```commandline
-chmod +x kubes-setup.sh
-./kubes-setup.sh
-```
+Get api keys and put them in .env (NEWS_API_KEY="your api key")

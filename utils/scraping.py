@@ -9,13 +9,53 @@ from collections import defaultdict
 from dotenv import load_dotenv
 import json
 import datetime
-import os
+import os, shutil
 load_dotenv()
 API_KEY = os.getenv("NEWS_API_KEY")
+nltk_dl_folder = os.getcwd() +"//nltk//"
+nltk.download("punkt", download_dir=nltk_dl_folder)
+nltk.download("punkt_tab", download_dir=nltk_dl_folder)
 
-nltk.download("punkt")
-nltk.download("punkt_tab")
+source_dir = nltk_dl_folder + "tokenizers//punkt_tab//english//"
+dest_dir = nltk_dl_folder + "tokenizers//punkt_tab//en//"
+
+
+if not os.path.isdir(source_dir):
+    source_dir, dest_dir = dest_dir, source_dir
+if os.path.isdir(source_dir) and os.path.isdir(dest_dir):
+    pass
+else:
+    try:
+        # Copy the entire directory tree from source to destination
+        shutil.copytree(source_dir, dest_dir)
+        print(f"Folder '{source_dir}' copied successfully to '{dest_dir}'")
+    except FileExistsError:
+        pass
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+source_file = nltk_dl_folder + "tokenizers//punkt//PY3//english.pickle"
+dest_file = nltk_dl_folder + "tokenizers//punkt//PY3//en.pickle"
+
+
+if not os.path.exists(source_file):
+    source_file, dest_file = dest_file, source_file
+if os.path.exists(source_file) and os.path.exists(dest_file):
+    pass
+else:
+    try:
+        shutil.copy(source_file, dest_file)
+        print(f"File '{source_file}' copied successfully to '{dest_file}'")
+    except FileExistsError:
+        pass
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+
 newsapi = NewsApiClient(api_key=API_KEY)
+
+
 
 def get_news(n, days):
     today_str = datetime.date.today().strftime("%Y-%m-%d")
