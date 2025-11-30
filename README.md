@@ -8,3 +8,5 @@ install minikubes, kubectl
 pip install requirements.txt
 
 Get api keys and put them in .env (NEWS_API_KEY="your api key")
+
+Run `minikube start` before running program
