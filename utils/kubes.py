@@ -178,7 +178,8 @@ def integration_test(api):
 
 
 def send_payload_to_pod(api, pod_name, payload):
-    output = exec_stream(api, pod_name, f"ollama run {payload["model"]} \"{payload["prompt"]}\"")
+    exec_stream(api, pod_name, f"ollama run {payload["model"]} \"{payload["prompt"]}\" > out")
+    output = exec_stream(api, pod_name, "cat out")
     return output
 
 
@@ -209,7 +210,7 @@ def kubes_parallel_analysis(api, id_prompts, send_payload_to_pod=send_payload_to
             id_prompts[i]["result"] = r
         if count_max>0:
             if count_func is not None:
-                n = len(list(filter(lambda x : count_func(x[1]), results)))
+                n = len(list(filter(lambda x : count_func(x), results)))
             else:
                 n = len(results)
             if n>=count_max:
